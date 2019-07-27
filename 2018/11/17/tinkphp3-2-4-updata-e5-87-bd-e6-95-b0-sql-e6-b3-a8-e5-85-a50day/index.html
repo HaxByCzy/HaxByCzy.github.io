@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+
+  
+  <title>ThinkPHP3.2.4-Updata函数SQL注入0day | 肖泽的家</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="前言这个属于0day，且考虑到TinkPHP3已经过了官方的维护期，估计这个漏洞永远都是0day了。同时，这个漏洞有一个大坑，这篇文章将会不提这个坑，如果你有兴趣复现的话就一定会遇到这个坑，那个时候欢迎联系我讨论。只是看个热闹的话，就不用联系我了，毕竟不是免费的。 静态分析 这是触发漏洞的例子，这里面我们需要控制的变量如图。漏洞成因是在update函数当中，但是一般开发都不会直接调用update函">
+<meta name="keywords" content="PHP,代码审计,白盒,0day,ThinkPHP">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ThinkPHP3.2.4-Updata函数SQL注入0day">
+<meta property="og:url" content="http://yoursite.com/2018/11/17/tinkphp3-2-4-updata-e5-87-bd-e6-95-b0-sql-e6-b3-a8-e5-85-a50day/index.html">
+<meta property="og:site_name" content="肖泽的家">
+<meta property="og:description" content="前言这个属于0day，且考虑到TinkPHP3已经过了官方的维护期，估计这个漏洞永远都是0day了。同时，这个漏洞有一个大坑，这篇文章将会不提这个坑，如果你有兴趣复现的话就一定会遇到这个坑，那个时候欢迎联系我讨论。只是看个热闹的话，就不用联系我了，毕竟不是免费的。 静态分析 这是触发漏洞的例子，这里面我们需要控制的变量如图。漏洞成因是在update函数当中，但是一般开发都不会直接调用update函">
+<meta property="og:locale" content="default">
+<meta property="og:image" content="http://yoursite.com/tinkphp3-2-4-updata-e5-87-bd-e6-95-b0-sql-e6-b3-a8-e5-85-a50day.md/sF2rqTY.png">
+<meta property="og:image" content="http://yoursite.com/tinkphp3-2-4-updata-e5-87-bd-e6-95-b0-sql-e6-b3-a8-e5-85-a50day.md/nEBMJv2.png">
+<meta property="og:image" content="http://yoursite.com/tinkphp3-2-4-updata-e5-87-bd-e6-95-b0-sql-e6-b3-a8-e5-85-a50day.md/2YtHalL.png">
+<meta property="og:image" content="http://yoursite.com/tinkphp3-2-4-updata-e5-87-bd-e6-95-b0-sql-e6-b3-a8-e5-85-a50day.md/YcdRUSw.png">
+<meta property="og:updated_time" content="2019-07-27T19:23:09.309Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="ThinkPHP3.2.4-Updata函数SQL注入0day">
+<meta name="twitter:description" content="前言这个属于0day，且考虑到TinkPHP3已经过了官方的维护期，估计这个漏洞永远都是0day了。同时，这个漏洞有一个大坑，这篇文章将会不提这个坑，如果你有兴趣复现的话就一定会遇到这个坑，那个时候欢迎联系我讨论。只是看个热闹的话，就不用联系我了，毕竟不是免费的。 静态分析 这是触发漏洞的例子，这里面我们需要控制的变量如图。漏洞成因是在update函数当中，但是一般开发都不会直接调用update函">
+<meta name="twitter:image" content="http://yoursite.com/tinkphp3-2-4-updata-e5-87-bd-e6-95-b0-sql-e6-b3-a8-e5-85-a50day.md/sF2rqTY.png">
+  
+    <link rel="alternate" href="/atom.xml" title="肖泽的家" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+</html>
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">肖泽的家</a>
+      </h1>
+      
+        <h2 id="subtitle-wrap">
+          <a href="/" id="subtitle">Baye</a>
+        </h2>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-tinkphp3-2-4-updata-e5-87-bd-e6-95-b0-sql-e6-b3-a8-e5-85-a50day" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/11/17/tinkphp3-2-4-updata-e5-87-bd-e6-95-b0-sql-e6-b3-a8-e5-85-a50day/" class="article-date">
+  <time datetime="2018-11-16T16:03:26.000Z" itemprop="datePublished">2018-11-17</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/ThinkPHP/">ThinkPHP</a>►<a class="article-category-link" href="/categories/ThinkPHP/代码审计/">代码审计</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      ThinkPHP3.2.4-Updata函数SQL注入0day
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>这个属于0day，且考虑到TinkPHP3已经过了官方的维护期，估计这个漏洞永远都是0day了。同时，这个漏洞有一个大坑，这篇文章将会不提这个坑，如果你有兴趣复现的话就一定会遇到这个坑，那个时候欢迎联系我讨论。只是看个热闹的话，就不用联系我了，毕竟不是免费的。</p>
+<h2 id="静态分析"><a href="#静态分析" class="headerlink" title="静态分析"></a>静态分析</h2><p><img src="/tinkphp3-2-4-updata-e5-87-bd-e6-95-b0-sql-e6-b3-a8-e5-85-a50day.md/sF2rqTY.png" alt> 这是触发漏洞的例子，这里面我们需要控制的变量如图。漏洞成因是在<code>update</code>函数当中，但是一般开发都不会直接调用<code>update</code>函数，且官方手册建议更新数据用的是<code>save</code>函数，因此我们这里用它做例子。如下是代码，方便复制粘贴:</p>
+<pre><code>&lt;?php
+namespace Home\Controller;
+
+use Think\Controller;
+
+class IndexController extends Controller
+{
+public function test()
+{
+    $conmm=I(&quot;get.com&quot;);
+    $save=I(&quot;get.t&quot;);
+    $res=M(&quot;users&quot;)-&gt;where(array(&quot;key&quot;=&gt;$conmm))-&gt;save(array(&quot;name&quot;=&gt;$save));
+
+}
+}</code></pre><p>我们首先跟进<code>where</code>方法：</p>
+<pre><code>    public function where($where, $parse = null)
+{
+    if (!is_null($parse) &amp;&amp; is_string($where)) {
+        if (!is_array($parse)) {
+            $parse = func_get_args();
+            array_shift($parse);
+        }
+        $parse = array_map(array($this-&gt;db, &apos;escapeString&apos;), $parse);
+        $where = vsprintf($where, $parse);
+    } elseif (is_object($where)) {
+        $where = get_object_vars($where);
+    }
+    if (is_string($where) &amp;&amp; &apos;&apos; != $where) {
+        $map            = array();
+        $map[&apos;_string&apos;] = $where;
+        $where          = $map;
+    }
+    if (isset($this-&gt;options[&apos;where&apos;])) {
+        $this-&gt;options[&apos;where&apos;] = array_merge($this-&gt;options[&apos;where&apos;], $where);
+    } else {
+        $this-&gt;options[&apos;where&apos;] = $where;
+    }
+
+    return $this;
+}</code></pre><p>这里我们能控制的只是<code>$where</code>这个数组里面的某个key的值，并不能直接控制。因为直接控制的话传入字符串就直接导致注入了，这也不符合开发手册，它推荐的是传入一个数组且不让用户控制key的值。因此为了符合我们这里只能控制某个值。在这个方法里面我们发现它直接把传入的数组赋值给了<code>$this-&gt;options[&#39;where&#39;]</code>，随后就返回。即我们能控制<code>$this-&gt;options[&#39;where&#39;]</code>这个数组中某个key的值。 我们接下来回到起点，跟入<code>save</code>方法看看它是怎么调用<code>updata</code>的：</p>
+<pre><code>    public function save($data = &apos;&apos;, $options = array())#data是一个数组，我们能控制这个数组的某个key的值。主要看他是怎么处理data的
+{
+    if (empty($data)) {// 没有传递数据，获取当前数据对象的值，无关
+        if (!empty($this-&gt;data)) {
+            $data = $this-&gt;data;
+            // 重置数据
+            $this-&gt;data = array();
+        } else {
+            $this-&gt;error = L(&apos;_DATA_TYPE_INVALID_&apos;);
+            return false;
+        }
+    }
+    // 数据处理
+    $data = $this-&gt;_facade($data);#这里检测data里面的key是不是需要操作的表里面的字段，如果不是就去这组key和val
+    if (empty($data)) {
+        // 没有数据则不执行
+        $this-&gt;error = L(&apos;_DATA_TYPE_INVALID_&apos;);
+        return false;
+    }
+    // 分析表达式
+    $options = $this-&gt;_parseOptions($options);#语法分析和拼接，$options在符合开发手册的情况下我们无法控制。
+    $pk      = $this-&gt;getPk();#获取表的主键
+    if (!isset($options[&apos;where&apos;])) {
+        // 如果存在主键数据 则自动作为更新条件
+        if (is_string($pk) &amp;&amp; isset($data[$pk])) {
+            $where[$pk] = $data[$pk];
+            unset($data[$pk]);
+        } elseif (is_array($pk)) {
+            // 增加复合主键支持
+            foreach ($pk as $field) {
+                if (isset($data[$field])) {
+                    $where[$field] = $data[$field];
+                } else {
+                    // 如果缺少复合主键数据则不执行
+                    $this-&gt;error = L(&apos;_OPERATION_WRONG_&apos;);
+                    return false;
+                }
+                unset($data[$field]);
+            }
+        }
+        if (!isset($where)) {
+            // 如果没有任何更新条件则不执行
+            $this-&gt;error = L(&apos;_OPERATION_WRONG_&apos;);
+            return false;
+        } else {
+            $options[&apos;where&apos;] = $where;
+        }
+    }
+
+    if (is_array($options[&apos;where&apos;]) &amp;&amp; isset($options[&apos;where&apos;][$pk])) {
+        $pkValue = $options[&apos;where&apos;][$pk];
+    }
+    if (false === $this-&gt;_before_update($data, $options)) {
+        return false;
+    }
+    $result = $this-&gt;db-&gt;update($data, $options);#漏洞点在update，我们直接跟入。
+    if (false !== $result &amp;&amp; is_numeric($result)) {
+        if (isset($pkValue)) {
+            $data[$pk] = $pkValue;
+        }
+
+        $this-&gt;_after_update($data, $options);
+    }
+    return $result;
+}</code></pre><p>代码略多，有兴趣可以根据我的注释仔细阅读，这里只讲关键部分。这里的<code>$data</code>我们依然只能控制这个数组里面的某个key的值，依然是为了符合大多数开发者的习惯和官方例子。我们主要看看它是怎么处理我们的<code>$data</code>这个变量的。首先<code>$data = $this-&gt;_facade($data);</code>，我们跟进<code>$this-&gt;_facade</code>:</p>
+<pre><code>protected function _facade($data)
+{
+
+    // 检查数据字段合法性
+    if (!empty($this-&gt;fields)) {
+        if (!empty($this-&gt;options[&apos;field&apos;])) {
+            $fields = $this-&gt;options[&apos;field&apos;];
+            unset($this-&gt;options[&apos;field&apos;]);
+            if (is_string($fields)) {
+                $fields = explode(&apos;,&apos;, $fields);
+            }
+        } else {
+            $fields = $this-&gt;fields;
+        }
+        foreach ($data as $key =&gt; $val) {
+            if (!in_array($key, $fields, true)) {
+                if (!empty($this-&gt;options[&apos;strict&apos;])) {
+                    E(L(&apos;_DATA_TYPE_INVALID_&apos;) . &apos;:[&apos; . $key . &apos;=&gt;&apos; . $val . &apos;]&apos;);
+                }
+                unset($data[$key]);#若数组的key不是需要查询的表的字段即销毁这对数据
+            } elseif (is_scalar($val)) {
+                // 字段类型检查 和 强制转换
+                $this-&gt;_parseType($data, $key);
+            }
+        }
+    }
+
+    // 安全过滤
+    if (!empty($this-&gt;options[&apos;filter&apos;])) {
+        $data = array_map($this-&gt;options[&apos;filter&apos;], $data);
+        unset($this-&gt;options[&apos;filter&apos;]);
+    }
+    $this-&gt;_before_write($data);
+    return $data;
+}</code></pre><p>只是简单的核对数组里面的key的合法性，即是否对应数据库需要查询的表的字段，如果key不是需要查询的表的字段之一，便销毁这对数据。同时用<code>$this-&gt;_parseType</code>方法进行强制类型转换：</p>
+<pre><code>protected function _parseType(&amp;$data, $key)
+{
+    if (!isset($this-&gt;options[&apos;bind&apos;][&apos;:&apos; . $key]) &amp;&amp; isset($this-&gt;fields[&apos;_type&apos;][$key])) {
+        $fieldType = strtolower($this-&gt;fields[&apos;_type&apos;][$key]);
+        if (false !== strpos($fieldType, &apos;enum&apos;)) {
+            // 支持ENUM类型优先检测
+        } elseif (false === strpos($fieldType, &apos;bigint&apos;) &amp;&amp; false !== strpos($fieldType, &apos;int&apos;)) {
+             $data[$key] = intval($data[$key]);
+        } elseif (false !== strpos($fieldType, &apos;float&apos;) || false !== strpos($fieldType, &apos;double&apos;)) {
+            $data[$key] = floatval($data[$key]);
+        } elseif (false !== strpos($fieldType, &apos;bool&apos;)) {
+            $data[$key] = (bool) $data[$key];
+        }
+    }
+}</code></pre><p>根据表字段的数据类型来强制转换对应的key的数据类型，。我们回到<code>save</code>方法看接下来对<code>$data</code>就直接传入<code>$result = $this-&gt;db-&gt;update($data, $options)</code>中的<code>$this-&gt;db-&gt;update</code>方法（前面还有一些对<code>$data</code>的检查，这里不在累述自行看代码）。</p>
+<pre><code>    public function update($data, $options)
+{
+    $this-&gt;model = $options[&apos;model&apos;];
+    $this-&gt;parseBind(!empty($options[&apos;bind&apos;]) ? $options[&apos;bind&apos;] : array());
+    $table = $this-&gt;parseTable($options[&apos;table&apos;]);
+    $sql   = &apos;UPDATE &apos; . $table . $this-&gt;parseSet($data);#$data传入了这里进行处理
+    if (strpos($table, &apos;,&apos;)) {
+        // 多表更新支持JOIN操作
+        $sql .= $this-&gt;parseJoin(!empty($options[&apos;join&apos;]) ? $options[&apos;join&apos;] : &apos;&apos;);
+    }
+    $sql .= $this-&gt;parseWhere(!empty($options[&apos;where&apos;]) ? $options[&apos;where&apos;] : &apos;&apos;);
+    if (!strpos($table, &apos;,&apos;)) {
+        //  单表更新支持order和lmit
+        $sql .= $this-&gt;parseOrder(!empty($options[&apos;order&apos;]) ? $options[&apos;order&apos;] : &apos;&apos;)
+        . $this-&gt;parseLimit(!empty($options[&apos;limit&apos;]) ? $options[&apos;limit&apos;] : &apos;&apos;);
+    }
+    $sql .= $this-&gt;parseComment(!empty($options[&apos;comment&apos;]) ? $options[&apos;comment&apos;] : &apos;&apos;);
+    $options[&apos;fetch_sql&apos;]=1;
+    return $this-&gt;execute($sql, !empty($options[&apos;fetch_sql&apos;]) ? true : false);
+}</code></pre><p>这里我们整理一下我们能控制的变量，即<code>$data</code>中的不可控key的值我们可以控制。这个方法对<code>$data</code>唯一有处理的地方是<code>$this-&gt;parseSet</code>这个方法，我们跟入:</p>
+<pre><code>        protected function parseSet($data)
+{
+    foreach ($data as $key =&gt; $val) {
+        if (isset($val[0]) &amp;&amp; &apos;exp&apos; == $val[0]) {
+            $set[] = $this-&gt;parseKey($key) . &apos;=&apos; . $val[1];
+        } elseif (is_null($val)) {
+            $set[] = $this-&gt;parseKey($key) . &apos;=NULL&apos;;
+        } elseif (is_scalar($val)) {
+            // 过滤非标量数据
+            if (0 === strpos($val, &apos;:&apos;) &amp;&amp; in_array($val, array_keys($this-&gt;bind))) {
+                $set[] = $this-&gt;parseKey($key) . &apos;=&apos; . $val;
+            } else {
+                $name  = count($this-&gt;bind);
+                $set[] = $this-&gt;parseKey($key) . &apos;=:&apos; . $key . &apos;_&apos; . $name;
+                $this-&gt;bindParam($key . &apos;_&apos; . $name, $val);
+            }
+        }
+    }
+    return &apos; SET &apos; . implode(&apos;,&apos;, $set);
+}</code></pre><p>前面两个if没什么看的必要，毕竟正常情况我们进不去。我们这里看这段:</p>
+<pre><code>if (0 === strpos($val, &apos;:&apos;) &amp;&amp; in_array($val, array_keys($this-&gt;bind))) {
+            $set[] = $this-&gt;parseKey($key) . &apos;=&apos; . $val;
+        } else {
+            $name  = count($this-&gt;bind);
+            $set[] = $this-&gt;parseKey($key) . &apos;=:&apos; . $key . &apos;_&apos; . $name;
+            $this-&gt;bindParam($key . &apos;_&apos; . $name, $val);
+        }</code></pre><p>这里用严格判断来判断了传入的<code>$data</code>中的值的第一个开头是否是<code>:</code>这个字符串，因为用的是严格判断，没办法搞一些骚操作，同时还判断了是否在<code>$this-&gt;bind</code>里面，这里<code>$this-&gt;bind</code>是什么我们暂时不知道。我们先看下面的<code>else</code>，下面先判断了<code>$this-&gt;bind</code>的数量同时赋值给了<code>$name</code>，接下来做了一个字符串拼接，格式大概是<code>key=:key_$this-&gt;bind数量</code>这样的格式，具体可以自行动态调试下断点看看。下面调用了<code>$this-&gt;bindParam</code>这个方法：</p>
+<pre><code>protected function bindParam($name, $value)
+{
+    $this-&gt;bind[&apos;:&apos; . $name] = $value;
+}</code></pre><p>我们可以发现这里对之前判断的<code>$this-&gt;bind</code>进行了赋值修改的操作，我们看代码发现传入的参数<code>$this-&gt;bindParam($key . &#39;_&#39; . $name, $val);</code>中，我们能控制的只有<code>$val</code>，即数组的值，也就是这个<code>$this-&gt;bind</code>数组的值我们能控制。接下来进入循环判断的环节。然后返回<code>return &#39; SET &#39; . implode(&#39;,&#39;, $set);</code>，其中的<code>$set</code>中的值是之前的<code>key=:key_$this-&gt;bind数量</code>这样的格式数据，然后拼接。我们回到<code>update</code>，继续看下面的sql拼接<code>sql .= $this-&gt;parseWhere(!empty($options[&#39;where&#39;]) ? $options[&#39;where&#39;] : &#39;&#39;);</code>中的<code>$this-&gt;parseWhere</code>方法，这里传入的参数是之前我们调用<code>$res=M(&quot;users&quot;)-&gt;where(array(&quot;key&quot;=&gt;$conmm))</code>传入的<code>array(&quot;key&quot;=&gt;$conmm)</code>，<code>where</code>方法在处理的时候把我们传入的数组传递给了<code>$options[&#39;where&#39;]</code>，而<code>$this-&gt;parseWhere</code>就是处理这个数组的地方，我们跟入：</p>
+<pre><code>        protected function parseWhere($where)
+{
+    $whereStr = &apos;&apos;;
+    if (is_string($where)) {
+        // 直接使用字符串条件
+        $whereStr = $where;
+    } else {
+        .......
+                } else {
+                    $whereStr .= $this-&gt;parseWhereItem($this-&gt;parseKey($key), $val);
+    .......
+    }
+    return empty($whereStr) ? &apos;&apos; : &apos; WHERE &apos; . $whereStr;
+}</code></pre><p>这里原来的代码太长，因此只截取了关键部分，这里<code>$this-&gt;parseKey</code>相当于没做任何处理直接返回传入的<code>$key</code>,这个变量就是之前传入给<code>where</code>方法中<code>array(&quot;key&quot;=&gt;$conmm)</code>这个数组中的<code>&quot;key&quot;</code>这个字符串，<code>$val</code>就是我们可控的变量<code>$conmm</code>。我们跟入<code>$this-&gt;parseWhereItem</code>方法：</p>
+<pre><code>    protected function parseWhereItem($key, $val)
+{
+    $whereStr = &apos;&apos;;
+    if (is_array($val)) {
+    ............
+    } else {
+        if ($likeFields &amp;&amp; preg_match(&apos;/^(&apos; . $likeFields . &apos;)$/i&apos;, $key)) {
+            .....
+        } else {
+            $whereStr .= $key . &apos; = &apos; . $this-&gt;parseValue($val);
+        }
+    }
+    return $whereStr;
+}</code></pre><p>因为这段代码太长就省略部分，只看关键的，我们这里跟入<code>$this-&gt;parseValue</code>，而这里<code>$val</code>则是我们传入的可控变量<code>$conmm</code>:</p>
+<pre><code>    protected function parseValue($value)
+{
+    if (is_string($value)) {
+        $value = strpos($value, &apos;:&apos;) === 0 &amp;&amp; in_array($value, array_keys($this-&gt;bind)) ? $this-&gt;escapeString($value) : &apos;\&apos;&apos; . $this-&gt;escapeString($value) . &apos;\&apos;&apos;;
+    } elseif (isset($value[0]) &amp;&amp; is_string($value[0]) &amp;&amp; strtolower($value[0]) == &apos;exp&apos;) {
+        $value = $this-&gt;escapeString($value[1]);
+    } elseif (is_array($value)) {
+        $value = array_map(array($this, &apos;parseValue&apos;), $value);
+    } elseif (is_bool($value)) {
+        $value = $value ? &apos;1&apos; : &apos;0&apos;;
+    } elseif (is_null($value)) {
+        $value = &apos;null&apos;;
+    }
+    return $value;
+}</code></pre><p>这里我们看直接看<code>$value</code>判断为字符串的这个条件，它在这里对<code>$value</code>进行了重赋值，用的是3目运算，首先判断这个字符串的是不是<code>:</code>开头并且是<code>$this-&gt;bind</code>其中某个key。如果判断不过关则用<code>$this-&gt;escapeString</code>方法实际上就是PHP内置的<code>addslashes</code>函数来进行过滤并且将它包裹在单引号之内。</p>
+<blockquote>
+<p>这里包裹了一次单引号，划重点。</p>
+</blockquote>
+<p>接下来的sql拼接和我们没关系了，我们并不能控制他们，就直接看最后sql执行的部分，即<code>$this-&gt;execute</code>方法： <img src="/tinkphp3-2-4-updata-e5-87-bd-e6-95-b0-sql-e6-b3-a8-e5-85-a50day.md/nEBMJv2.png" alt> 太长就不全部复制了，关键点就在是这句，坑也在这下面。这里就略过不提坑了。</p>
+<pre><code>$this-&gt;queryStr = strtr($this-&gt;queryStr, array_map(function ($val) use ($that) {return &apos;\&apos;&apos; . $that-&gt;escapeString($val) . &apos;\&apos;&apos;;}, $this-&gt;bind));</code></pre><p>最终，在这里进行替换拼接，这里又包裹了一次单引号导致传说中的自闭最终引发注入。我们只需要在<code>where</code>方法这里传递进去的给数组的值是<code>:key_$this-&gt;bind数量</code>这样格式的，比如<code>:name_0</code>这样格式的，在后面替换执行的时候就会一起替换掉，但是直接传入<code>:name_0</code>是不行的，因为在第一次包裹单引号的<code>$this-&gt;parseValue</code>方法里:</p>
+<pre><code>        protected function parseValue($value)
+{
+    if (is_string($value)) {
+        $value = strpos($value, &apos;:&apos;) === 0 &amp;&amp; in_array($value, array_keys($this-&gt;bind)) ? $this-&gt;escapeString($value) : &apos;\&apos;&apos; . $this-&gt;escapeString($value) . &apos;\&apos;&apos;;
+    } elseif (isset($value[0]) &amp;&amp; is_string($value[0]) &amp;&amp; strtolower($value[0]) == &apos;exp&apos;) {
+        $value = $this-&gt;escapeString($value[1]);
+    } elseif (is_array($value)) {
+        $value = array_map(array($this, &apos;parseValue&apos;), $value);
+    } elseif (is_bool($value)) {
+        $value = $value ? &apos;1&apos; : &apos;0&apos;;
+    } elseif (is_null($value)) {
+        $value = &apos;null&apos;;
+    }
+    return $value;
+}</code></pre><p>这里进行了判断，如果是<code>:name_0</code>，就会因为第一位是<code>:</code>而不包裹单引号，在后面的时候就值包裹了一次导致正常执行，所以这里需要是<code>1:name_0</code>来让<code>$this-&gt;parseValue</code>给我们包裹上一次单引号，最后在<code>$this-&gt;execute</code>替换执行的时候在包裹一次单引号导致自闭。详情看下面POC。 这里有个坑是这段最终执行的不是这个，但是依然有办法导致注入。如果你自己想到了思路欢迎和我分享交流，如果没有想到但是依然想得到答案那估计只能等我有空更新这篇文章了，或者按照前言留的联系方式联系我。</p>
+<h2 id="动态分析"><a href="#动态分析" class="headerlink" title="动态分析"></a>动态分析</h2><p>因为懒，所以这段等有空再写在更新</p>
+<h2 id="POC（伪）"><a href="#POC（伪）" class="headerlink" title="POC（伪）"></a>POC（伪）</h2><blockquote>
+<p>需要你自己想办法解决坑，或者联系QQ1478023488进行PY交易</p>
+</blockquote>
+<p><code>http://localhost/tp/index.php?m=Home&amp;c=Index&amp;a=test&amp;com=1:name_0&amp;t= and 1=1 -- -</code> <img src="/tinkphp3-2-4-updata-e5-87-bd-e6-95-b0-sql-e6-b3-a8-e5-85-a50day.md/2YtHalL.png" alt> 成功闭合 <code>http://localhost/tp/index.php?m=Home&amp;c=Index&amp;a=test&amp;com=123:name_0&amp;t=%20or%203=3%20--%20-</code> <img src="/tinkphp3-2-4-updata-e5-87-bd-e6-95-b0-sql-e6-b3-a8-e5-85-a50day.md/YcdRUSw.png" alt> 成功闭合 这只是表象。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>懒得写</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/11/17/tinkphp3-2-4-updata-e5-87-bd-e6-95-b0-sql-e6-b3-a8-e5-85-a50day/" data-id="cjylxgkuf000ibrvbr15dhmkg" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/0day/">0day</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/PHP/">PHP</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ThinkPHP/">ThinkPHP</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/代码审计/">代码审计</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/白盒/">白盒</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2018/11/22/e6-9f-90-e7-83-ad-e9-97-a8-e8-99-9a-e6-8b-9f-e5-b8-81-e4-ba-a4-e6-98-93-e6-89-800day-e6-8c-96-e6-8e-98-e7-ac-94-e8-ae-b0/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          某热门虚拟币交易所0day挖掘笔记
+        
+      </div>
+    </a>
+  
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/ThinkPHP/">ThinkPHP</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/ThinkPHP/代码审计/">代码审计</a></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/代码审计/">代码审计</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/代码审计/安全/">安全</a></li></ul></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/0day/">0day</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/PHP/">PHP</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/PHP7/">PHP7</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ThinkPHP/">ThinkPHP</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/代码审计/">代码审计</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/白盒/">白盒</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/0day/" style="font-size: 10px;">0day</a> <a href="/tags/PHP/" style="font-size: 20px;">PHP</a> <a href="/tags/PHP7/" style="font-size: 10px;">PHP7</a> <a href="/tags/ThinkPHP/" style="font-size: 10px;">ThinkPHP</a> <a href="/tags/代码审计/" style="font-size: 20px;">代码审计</a> <a href="/tags/白盒/" style="font-size: 20px;">白盒</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/02/">February 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/11/">November 2018</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2019/02/28/php7-e5-92-8cphp5-e5-9c-a8-e5-ae-89-e5-85-a8-e4-b8-8a-e7-9a-84-e5-8c-ba-e5-88-ab/">PHP7和PHP5在安全上的区别</a>
+          </li>
+        
+          <li>
+            <a href="/2018/11/22/e6-9f-90-e7-83-ad-e9-97-a8-e8-99-9a-e6-8b-9f-e5-b8-81-e4-ba-a4-e6-98-93-e6-89-800day-e6-8c-96-e6-8e-98-e7-ac-94-e8-ae-b0/">某热门虚拟币交易所0day挖掘笔记</a>
+          </li>
+        
+          <li>
+            <a href="/2018/11/17/tinkphp3-2-4-updata-e5-87-bd-e6-95-b0-sql-e6-b3-a8-e5-85-a50day/">ThinkPHP3.2.4-Updata函数SQL注入0day</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2019 XiaoZe<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+
+
+  </div>
+</body>
+</html>
